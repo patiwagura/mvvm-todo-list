@@ -1,6 +1,6 @@
 # mvvm-todo-list App
 
-_A simple todo-list-app built with ** android architecture components ** &  ** mvvm architecture **._
+_A simple todo-list-app built with **android architecture components** &  **mvvm architecture**._
 
 ## Features:
 - search todos (filter todo-list items)
@@ -10,6 +10,7 @@ _A simple todo-list-app built with ** android architecture components ** &  ** m
 - show/hide completed todos.
 - delete items.
 - Add new items.
+
 
 ## Libraries & architecture used:
 - 100% Kotlin.
