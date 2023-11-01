@@ -24,7 +24,7 @@ _A simple todo-list-app built with **android architecture components** &  **mvvm
 - ViewModel + LiveData
 
 
-## Advantages of a good app Architecture:
-- separation of concerns: every component has its own responsibility.
+### Advantages of a good app Architecture:
+- separation of concerns, every component has its own/single responsibility.
 - easier to maintain & add more features to the app.
 
