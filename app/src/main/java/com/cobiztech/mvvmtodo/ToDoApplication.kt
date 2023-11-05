@@ -1,4 +1,8 @@
 package com.cobiztech.mvvmtodo
 
-class ToDoApplication {
+import android.app.Application
+import dagger.hilt.android.HiltAndroidApp
+
+@HiltAndroidApp
+class ToDoApplication : Application() {
 }
