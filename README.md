@@ -1,18 +1,17 @@
 # mvvm-todo-list App
 
-_A simple todo-list-app built with **android architecture components** &  **mvvm architecture**._
+_A simple todo-list-app built with **android architecture-components** & **mvvm**._
 
 ## Features:
-- search todos (filter todo-list items)
-- sort list items (by_name & by_date_created).
-- mark items as completed.
-- mark item as important (! increases item priority, appears on top of list).
+- search todos (filter list items)
+- sort list items (by: name & date_created).
+- mark completed items (checked items & strike-through)
+- ! mark important items (! items with priority appear on top of list).
 - show/hide completed todos.
-- delete items.
-- Add new items.
+- Add, Update, Delete items.
 
 
-## Libraries & architecture used:
+## Libraries, tools & architecture used:
 - 100% Kotlin.
 - Room (SQLite).
 - Jetpack DataStore :- store key/value pairs (small pieces of data e.g settings & preferences).
@@ -20,7 +19,7 @@ _A simple todo-list-app built with **android architecture components** &  **mvvm
 - Navigation Component.
 - Dependency injection (Dagger Hilt).
 - View Binding.
-- MVVM (Model-View-ViewModel) - app architecture.
+- MVVM (Model-View-ViewModel) - structure app into components (separation of concerns).
 - ViewModel + LiveData
 
 

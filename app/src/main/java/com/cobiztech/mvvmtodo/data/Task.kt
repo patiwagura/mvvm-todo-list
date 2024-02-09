@@ -6,7 +6,8 @@ import androidx.room.PrimaryKey
 import kotlinx.android.parcel.Parcelize
 import java.text.DateFormat
 
-//Note: make class properties immutable by using val.
+// val variableName - declare class properties as immutable.
+// parcelize - enables this class to be sent as an object.
 
 @Entity(tableName = "task_table")
 @Parcelize
@@ -17,7 +18,7 @@ data class Task(
     val created: Long = System.currentTimeMillis(),
     @PrimaryKey(autoGenerate = true) val id: Int = 0
 ) : Parcelable {
-    // dynamically format date from long-timeMillis to d/m/y
+    // format date from long-timeMillis to d/m/y
     val createdDateFormatted: String
         get() = DateFormat.getDateTimeInstance().format(created)
 

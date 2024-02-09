@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <!-- actionViewClass : make search-optionsMenu into expandable searchView
+    <!-- actionViewClass : make search_optionsMenu expand into expandable searchView.
      collapseActionView: collapse expanded searchView into search icon. -->
     <item
         android:id="@+id/action_search"
@@ -17,7 +17,7 @@
         android:title="@string/sort"
         app:showAsAction="always">
 
-        <!-- Sub-Menu here: Note: sub-menu must have menu-ids, for referencing in code e.g handle clickEvents -->
+        <!-- Sub-Menus must have menu-ids, for referencing in code e.g to handle clickEvents -->
         <menu>
             <item
                 android:id="@+id/action_sort_by_name"
@@ -29,7 +29,7 @@
         </menu>
     </item>
 
-    <!-- Hide completed menu-Item -->
+    <!-- Hide completed tasks  menu_item -->
     <item
         android:id="@+id/action_hide_completed_tasks"
         android:checkable="true"
@@ -41,6 +41,5 @@
         android:id="@+id/action_delete_all_completed_tasks"
         android:title="@string/delete_all_completed"
         app:showAsAction="never" />
-
 
 </menu>

@@ -16,7 +16,7 @@ abstract class TaskDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 
     // callBack to insert dummy-data into database.
-    // @inject - teaches dagger to construct/provide instance of this class (similar to using @Provides methods in modules).
+    // @inject - teaches dagger to create/provide instance of this class (similar to using @Provides methods in modules).
     class Callback @Inject constructor(
         private val database: Provider<TaskDatabase>,
         @ApplicationScope private val applicationScope: CoroutineScope
@@ -24,6 +24,7 @@ abstract class TaskDatabase : RoomDatabase() {
         override fun onCreate(db: SupportSQLiteDatabase) {
             super.onCreate(db)
 
+            // Provider - provides object-instances lazily.
             val dao = database.get().taskDao()
 
             applicationScope.launch {

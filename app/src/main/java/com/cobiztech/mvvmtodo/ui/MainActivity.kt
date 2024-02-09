@@ -12,5 +12,5 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
     }
 
-    // Continue : PART 7 (combining multiple flows).
+    // Continue : PART 10 (swipe to Delete).
 }
