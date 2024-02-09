@@ -8,7 +8,8 @@ _A simple todo-list-app built with **android architecture-components** & **mvvm*
 - mark completed items (checked items & strike-through)
 - ! mark important items (! items with priority appear on top of list).
 - show/hide completed todos.
-- Add, Update, Delete items.
+- Add, Update
+- Delete items (Swipe to delete & undo snackBar)
 
 
 ## Libraries, tools & architecture used:
