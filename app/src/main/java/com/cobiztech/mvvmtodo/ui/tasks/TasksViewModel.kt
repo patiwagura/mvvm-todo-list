@@ -1,9 +1,8 @@
 package com.cobiztech.mvvmtodo.ui.tasks
 
+import androidx.hilt.Assisted
 import androidx.hilt.lifecycle.ViewModelInject
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
-import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.*
 import com.cobiztech.mvvmtodo.data.PreferencesManager
 import com.cobiztech.mvvmtodo.data.SortOrder
 import com.cobiztech.mvvmtodo.data.Task
@@ -12,29 +11,34 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+
+// default values : sort_order = by_date, hideCompleted = false, searchQuery = ""
+// stateFlow - holds a single-value,  Flow - holds a stream of data.
 
 class TasksViewModel @ViewModelInject constructor(
     private val taskDao: TaskDao,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    @Assisted private val state: SavedStateHandle
 ) : ViewModel() {
     // Note: Flow<> - recommended below viewModel towards repositories, convert to liveData inside viewModel
     // LiveData is lifecycle aware, handles ui-state properly.
 
-    // stateFlow - holds a single-value
-    // Flow - holds a stream of data.
-    // default values : sort_order = by_date, hideCompleted = false, searchQuery = ""
-    val searchQuery = MutableStateFlow("")
+    //
+    // val searchQuery = MutableStateFlow("")
+    val searchQuery = state.getLiveData("searchQuery", "")
 
     val preferencesFlow = preferencesManager.preferencesFlow
 
-    // channel to send ui-events to fragment.
+    // channel to send ui-events - make channel private to prevent fragment putting a value, instead expose a flow (fragment allowed to only Read).
     private val tasksEventChannel = Channel<TasksEvent>()
+    val tasksEvent = tasksEventChannel.receiveAsFlow()
 
     // executes SQL-Query whenever user inputs a new searchQuery (search by task_name) or changes sortOrder (by_date, by_name)
     // combine searchQuery, sortOrder & hideCompleted into a single Flow, emits new Flow when any of the values change.
     private val tasksFlow = combine(
-        searchQuery,
+        searchQuery.asFlow(),
         preferencesFlow
     ) { query, filterPreferences -> Pair(query, filterPreferences) }
         .flatMapLatest { (query, filterPreferences) ->
@@ -54,8 +58,9 @@ class TasksViewModel @ViewModelInject constructor(
         preferencesManager.updateHideCompleted(hideCompleted)
     }
 
-    fun onTaskSelected(task: Task) {
-
+    // send events to addEditScreen - viewModel uses events to communicate to ui_layer.
+    fun onTaskSelected(task: Task) = viewModelScope.launch {
+        tasksEventChannel.send(TasksEvent.NavigateToEditTaskScreen(task))
     }
 
     /**
@@ -74,15 +79,37 @@ class TasksViewModel @ViewModelInject constructor(
      */
     fun onTaskSwiped(task: Task) = viewModelScope.launch {
         taskDao.delete(task)
-        // viewModel Logic decides when to show a snack_bar (viewModel should not have a reference to Activity/Fragment).
-        // Kotlin-Channels to dispatch a single-event to trigger snack_bar. (LiveData is not ideal saves the last value triggering snack_bar multiple times).
+
+        // viewModel Logic decides when to show a snackBar.
+        // viewModel cant have a reference to Activity/Fragment, therefore not possible to directly call methods on UI
+        // need Kotlin-Channels to dispatch single-event to trigger snack_bar. (LiveData is not ideal triggers snackBar multiple times).
         tasksEventChannel.send(TasksEvent.ShowUndoDeleteTaskMessage(task))
 
     }
 
-    // contains different event_types we can send to fragment.
+    /**
+     * @param task - task to re-insert back, if undo button is clicked.
+     */
+    fun onUndoDeleteClick(task: Task) = viewModelScope.launch {
+        taskDao.insert(task)
+    }
+
+    // send event to fragment - (viewModel uses events to communicate to ui_layer ).
+    fun onAddNewTaskClick() = viewModelScope.launch {
+        tasksEventChannel.send(TasksEvent.NavigateToAddTaskScreen)
+    }
+
+    // contains different event_types we can send to channel.
     sealed class TasksEvent {
+        /**
+         * @param task - deleted task, if undo is clicked re-insert task back.
+         */
         data class ShowUndoDeleteTaskMessage(val task: Task) : TasksEvent()
+
+        // object : creates sub_classes that don't hold/send any data. makes code efficient.
+        object NavigateToAddTaskScreen : TasksEvent()
+
+        data class NavigateToEditTaskScreen(val task: Task) : TasksEvent()
     }
 
 }

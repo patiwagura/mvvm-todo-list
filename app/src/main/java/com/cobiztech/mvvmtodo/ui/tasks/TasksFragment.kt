@@ -9,6 +9,7 @@ import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,8 +17,11 @@ import com.cobiztech.mvvmtodo.R
 import com.cobiztech.mvvmtodo.data.SortOrder
 import com.cobiztech.mvvmtodo.data.Task
 import com.cobiztech.mvvmtodo.databinding.FragmentTasksBinding
+import com.cobiztech.mvvmtodo.util.exhaustive
 import com.cobiztech.mvvmtodo.util.onQueryTextChanged
+import com.google.android.material.snackbar.Snackbar
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
@@ -40,7 +44,7 @@ class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClic
                 setHasFixedSize(true)
             }
 
-            // RecyclerView swipe to delete - we can swipe LEFT & RIGHT to delete.
+            // RecyclerView swipe to delete - enable support for swipe LEFT | RIGHT to delete.
             ItemTouchHelper(object :
                 ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT) {
                 override fun onMove(
@@ -48,7 +52,7 @@ class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClic
                     viewHolder: RecyclerView.ViewHolder,
                     target: RecyclerView.ViewHolder
                 ): Boolean {
-                    return false // false indicates we don't support this move up & down.
+                    return false // false - indicates we don't support this move up & down.
                 }
 
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
@@ -59,11 +63,43 @@ class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClic
 
             }).attachToRecyclerView(recyclerViewTasks)
 
+            // fabAddTask click listener.
+            fabAddTask.setOnClickListener {
+                viewModel.onAddNewTaskClick()
+            }
+
         }
 
         viewModel.tasks.observe(viewLifecycleOwner) {
             // observable task_flow - we receive a new list whenever database changes.
             taskAdapter.submitList(it)
+        }
+
+        // only collect channel_events when fragment is active/visible on screen.
+        viewLifecycleOwner.lifecycleScope.launchWhenStarted {
+            viewModel.tasksEvent.collect { event ->
+                // handle different event_types sent by ViewModel.
+                when (event) {
+                    is TasksViewModel.TasksEvent.ShowUndoDeleteTaskMessage -> {
+                        Snackbar.make(requireView(), "Task Deleted", Snackbar.LENGTH_LONG)
+                            .setAction("UNDO") {
+                                viewModel.onUndoDeleteClick(event.task)
+                            }.show()
+                    }
+                    is TasksViewModel.TasksEvent.NavigateToAddTaskScreen -> {
+                        val action =
+                            TasksFragmentDirections.actionTasksFragmentToAddEditTaskFragment(null, "New Task")
+                        findNavController().navigate(action)
+                    }
+                    is TasksViewModel.TasksEvent.NavigateToEditTaskScreen -> {
+                        // Navigate to AddEditFragment - task to edit is passed as parameter.
+                        val action =
+                            TasksFragmentDirections.actionTasksFragmentToAddEditTaskFragment(event.task, "Edit Task")
+                        findNavController().navigate(action)
+                    }
+                }.exhaustive
+
+            }
         }
 
         setHasOptionsMenu(true)
