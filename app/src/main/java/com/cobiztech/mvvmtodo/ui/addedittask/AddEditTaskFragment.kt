@@ -58,7 +58,7 @@ class AddEditTaskFragment : Fragment(R.layout.fragment_add_edit_task) {
 
         }
 
-        // collect ui_events from channel only when fragment is visible/active on screen.
+        // collect ui_events from channel - only when fragment is visible/active on screen.
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.addEditTaskEvent.collect { event ->
                 when (event) {

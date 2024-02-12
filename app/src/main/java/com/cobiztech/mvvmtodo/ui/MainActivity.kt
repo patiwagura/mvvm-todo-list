@@ -10,7 +10,7 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import com.cobiztech.mvvmtodo.R
 import dagger.hilt.android.AndroidEntryPoint
 
-// Continue : PART 11 @18:55 (Nav args & savedStateHandle).
+// Continue : PART 13 @00:00 (Delete All Dialog).
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {

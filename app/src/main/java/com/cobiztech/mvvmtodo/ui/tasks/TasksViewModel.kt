@@ -7,6 +7,8 @@ import com.cobiztech.mvvmtodo.data.PreferencesManager
 import com.cobiztech.mvvmtodo.data.SortOrder
 import com.cobiztech.mvvmtodo.data.Task
 import com.cobiztech.mvvmtodo.data.TaskDao
+import com.cobiztech.mvvmtodo.ui.ADD_TASK_RESULT_OK
+import com.cobiztech.mvvmtodo.ui.EDIT_TASK_RESULT_OK
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
@@ -87,9 +89,7 @@ class TasksViewModel @ViewModelInject constructor(
 
     }
 
-    /**
-     * @param task - task to re-insert back, if undo button is clicked.
-     */
+    //@param task - task to re-insert back, if undo button is clicked.
     fun onUndoDeleteClick(task: Task) = viewModelScope.launch {
         taskDao.insert(task)
     }
@@ -99,17 +99,35 @@ class TasksViewModel @ViewModelInject constructor(
         tasksEventChannel.send(TasksEvent.NavigateToAddTaskScreen)
     }
 
-    // contains different event_types we can send to channel.
+    fun onAddEditResult(result: Int) {
+        when (result) {
+            ADD_TASK_RESULT_OK -> showTaskSavedConfirmationMessage("Task added")
+            EDIT_TASK_RESULT_OK -> showTaskSavedConfirmationMessage("Task updated")
+        }
+    }
+
+    private fun showTaskSavedConfirmationMessage(str: String) = viewModelScope.launch {
+        tasksEventChannel.send(TasksEvent.ShowTaskSavedConfirmationMessage(str))
+    }
+
+    fun onDeleteAllCompletedClick() = viewModelScope.launch {
+        tasksEventChannel.send(TasksEvent.NavigateToDeleteAllCompletedScreen)
+    }
+
+    // contains different event_types channel can send to ui_screen/fragment.
     sealed class TasksEvent {
-        /**
-         * @param task - deleted task, if undo is clicked re-insert task back.
-         */
+
+        //  @param task - task to delete, if undo is clicked re-insert task back.
         data class ShowUndoDeleteTaskMessage(val task: Task) : TasksEvent()
 
-        // object : creates sub_classes that don't hold/send any data. makes code efficient.
+        // object : creates sub_classes that don't hold/send any data this makes code efficient.
         object NavigateToAddTaskScreen : TasksEvent()
 
         data class NavigateToEditTaskScreen(val task: Task) : TasksEvent()
+
+        data class ShowTaskSavedConfirmationMessage(val msg: String) : TasksEvent()
+
+        object NavigateToDeleteAllCompletedScreen : TasksEvent()
     }
 
 }

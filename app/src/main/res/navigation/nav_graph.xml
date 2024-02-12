@@ -28,4 +28,14 @@
             android:name="title"
             app:argType="string" />
     </fragment>
+
+    <!-- DeleteAllCompletedDialog has a global_action to keep it reusable & any screen can navigate to it. -->
+    <dialog
+        android:id="@+id/deleteAllCompletedDialogFragment"
+        android:name="com.cobiztech.mvvmtodo.ui.deleteallcompleted.DeleteAllCompletedDialogFragment"
+        android:label="DeleteAllCompletedDialogFragment" />
+    <action
+        android:id="@+id/action_global_deleteAllCompletedDialogFragment"
+        app:destination="@id/deleteAllCompletedDialogFragment" />
+
 </navigation>

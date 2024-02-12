@@ -7,6 +7,7 @@ import android.view.MenuItem
 import android.view.View
 import androidx.appcompat.widget.SearchView
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResultListener
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
@@ -28,6 +29,7 @@ import kotlinx.coroutines.launch
 @AndroidEntryPoint
 class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClickListener {
     private val viewModel: TasksViewModel by viewModels()
+    private lateinit var searchView: SearchView
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -56,7 +58,7 @@ class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClic
                 }
 
                 override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                    // use position of swiped viewHolder_item - to get task object we want to delete.
+                    // use swiped viewHolder_item position - to get task object we want to delete.
                     val task = taskAdapter.currentList[viewHolder.adapterPosition]
                     viewModel.onTaskSwiped(task)
                 }
@@ -70,12 +72,18 @@ class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClic
 
         }
 
+        // listener for FragmentResult API (get data sent to this fragment) - keys used must match.
+        setFragmentResultListener("add_edit_request") { _, bundle ->
+            val result = bundle.getInt("add_edit_result")
+            viewModel.onAddEditResult(result)
+        }
+
         viewModel.tasks.observe(viewLifecycleOwner) {
             // observable task_flow - we receive a new list whenever database changes.
             taskAdapter.submitList(it)
         }
 
-        // only collect channel_events when fragment is active/visible on screen.
+        // collect channel_events, only when fragment is active/visible on screen.
         viewLifecycleOwner.lifecycleScope.launchWhenStarted {
             viewModel.tasksEvent.collect { event ->
                 // handle different event_types sent by ViewModel.
@@ -87,14 +95,29 @@ class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClic
                             }.show()
                     }
                     is TasksViewModel.TasksEvent.NavigateToAddTaskScreen -> {
+                        // Navigate to AddTask - passing required arguments (task = null , screen_title = "New Task")
                         val action =
-                            TasksFragmentDirections.actionTasksFragmentToAddEditTaskFragment(null, "New Task")
+                            TasksFragmentDirections.actionTasksFragmentToAddEditTaskFragment(
+                                null,
+                                "New Task"
+                            )
                         findNavController().navigate(action)
                     }
                     is TasksViewModel.TasksEvent.NavigateToEditTaskScreen -> {
-                        // Navigate to AddEditFragment - task to edit is passed as parameter.
+                        // Navigate to AddEditFragment - passing required arguments (task_to_edit, screen_title ="Edit task" ).
                         val action =
-                            TasksFragmentDirections.actionTasksFragmentToAddEditTaskFragment(event.task, "Edit Task")
+                            TasksFragmentDirections.actionTasksFragmentToAddEditTaskFragment(
+                                event.task,
+                                "Edit Task"
+                            )
+                        findNavController().navigate(action)
+                    }
+                    is TasksViewModel.TasksEvent.ShowTaskSavedConfirmationMessage -> {
+                        Snackbar.make(requireView(), event.msg, Snackbar.LENGTH_SHORT).show()
+                    }
+                    is TasksViewModel.TasksEvent.NavigateToDeleteAllCompletedScreen -> {
+                        val action =
+                            TasksFragmentDirections.actionGlobalDeleteAllCompletedDialogFragment()
                         findNavController().navigate(action)
                     }
                 }.exhaustive
@@ -120,7 +143,15 @@ class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClic
 
         // get reference to search_menuItem ( SearchView is contained inside this menuItem).
         val searchItem = menu.findItem(R.id.action_search)
-        val searchView = searchItem.actionView as SearchView
+        searchView = searchItem.actionView as SearchView
+
+        // Restore searchView with existing search_query (e.g user was searching tasks).
+        // Simple_ViewLogic - decides how SearchView is displayed.
+        val pendingSearchQuery = viewModel.searchQuery.value
+        if (pendingSearchQuery != null && pendingSearchQuery.isNotEmpty()) {
+            searchItem.expandActionView()
+            searchView.setQuery(pendingSearchQuery, false)
+        }
 
         // update the searchQuery when user input/type-characters on the searchView e.g searching by task-name.
         searchView.onQueryTextChanged {
@@ -155,11 +186,17 @@ class TasksFragment : Fragment(R.layout.fragment_tasks), TasksAdapter.OnItemClic
             }
 
             R.id.action_delete_all_completed_tasks -> {
+                viewModel.onDeleteAllCompletedClick()
                 true
             }
 
             else -> super.onOptionsItemSelected(item)
         }
 
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        searchView.setOnQueryTextListener(null)
     }
 }
