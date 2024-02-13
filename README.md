@@ -2,6 +2,9 @@
 
 _A simple todo-list-app built with **android architecture-components** & **mvvm**._
 
+## App Screenshots:
+![todo app screenshot showing the features](/screenshots/todo-list-1.png)
+
 ## Features:
 - search todos (filter list items)
 - sort list items (by: name & date_created).
